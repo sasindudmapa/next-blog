@@ -1,23 +1,64 @@
+"use client";
+
 import Image from "next/image";
+import Link from "next/link";
+import { signIn, useSession, getProviders } from "next-auth/react";
+import { useEffect, useState } from "react";
 
 function NavBar() {
+  const { data: session } = useSession();
+
+  const [providers, setProviders] = useState(null);
   let isUserLoggedIn = true;
+
+  useEffect(() => {
+    async function setProvider() {
+      const res = await getProviders();
+      setProviders(res);
+    }
+
+    setProvider();
+  }, []);
 
   return (
     <nav>
       <div className="nav-left">
-        <Image src="/logo.png" alt="logo" width={30} height={30} />
+        <Link href="/">
+          <Image src="/logo.png" alt="logo" width={30} height={30} />
+        </Link>
       </div>
       <div className="nav-title">NEXT BLOG</div>
       <div className="nav-right">
-        {isUserLoggedIn ? (
+        {session?.user ? (
           <div>
-            <button className="nav-btn">Create Post</button>
-            <Image src="/logo.png" alt="profile" width={30} height={30} />
+            <Link href="/create-post">
+              <button className="nav-btn">Create Post</button>
+            </Link>
+            <Link href="/user/profile">
+              <Image
+                src={session?.user.image}
+                alt="profile"
+                width={30}
+                height={30}
+              />
+            </Link>
           </div>
         ) : (
           <div>
-            <button className="nav-btn">Sign In</button>
+            {providers &&
+              Object.values(providers).map((provider) => {
+                return (
+                  <button
+                    className="nav-btn"
+                    key={provider.id}
+                    onClick={() => {
+                      signIn(provider.id);
+                    }}
+                  >
+                    Sign In
+                  </button>
+                );
+              })}
           </div>
         )}
       </div>
